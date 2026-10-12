@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DomainQA | Document Intelligence</title>
+    <meta name="description" content="Retrieval-Augmented Generation system for domain-specific question answering.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=5">
+</head>
+<body>
+
+<div class="app-shell">
+    <aside class="app-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="m3 8 9-5 9 5-9 5-9-5Z"/>
+                    <path d="m3 12 9 5 9-5M3 16l9 5 9-5"/>
+                </svg>
+            </div>
+            <div class="brand-copy">
+                <span class="brand-name">DomainQA</span>
+                <span class="brand-subtitle">Document Intelligence</span>
+            </div>
+        </div>
+
+        <div class="sidebar-workspace">
+            <span>WORKSPACE</span>
+            <strong>Domain QA</strong>
+        </div>
+
+        <nav class="side-nav" aria-label="Primary navigation">
+            <button class="nav-btn active" id="navDashboard">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-btn" id="navDocuments">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+                <span>Documents</span>
+            </button>
+            <button class="nav-btn" id="navHistory">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>
+                <span>History</span>
+            </button>
+            <button class="nav-btn" id="navAnalytics">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h17"/><path d="m7 15 4-4 3 2 6-7"/></svg>
+                <span>Analytics</span>
+            </button>
+        </nav>
+
+        <section class="sidebar-documents" aria-label="Indexed documents">
+            <span class="sidebar-section-label">YOUR DOCUMENTS</span>
+            <div class="document-list" id="documentsList">
+                <div class="sidebar-empty">No documents yet</div>
+            </div>
+        </section>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-system-status">
+                <span class="status-indicator"></span>
+                <span>System Online</span>
+            </div>
+            <div class="sidebar-services"><span>FastAPI</span><span>ChromaDB</span><span>Gemini</span></div>
+        </div>
+    </aside>
+
+    <div class="app-main">
+        <header class="top-header">
+            <div class="workspace-title">
+                <div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>Domain QA</strong></div>
+                <h1>Knowledge Assistant</h1>
+            </div>
+            <div class="header-status">
+                <span class="connection-pill"><span class="status-indicator"></span>Connected</span>
+                <span class="brand-version">v2.0</span>
+            </div>
+        </header>
+
+        <main class="workspace-content">
+            <section class="dashboard" id="dashboardView">
+                <section class="dashboard-panel upload-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="panel-eyebrow">KNOWLEDGE BASE</span>
+                            <h2>Upload Document</h2>
+                        </div>
+                        <span class="stat-badge" id="documentCount">0 docs</span>
+                    </div>
+                    <p class="panel-caption">PDF, PNG, JPG, or WEBP — tables and images are extracted automatically.</p>
+                    <div class="upload-section">
+                        <div class="dropzone" id="dropZone">
+                            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,image/*,application/pdf" hidden>
+                            <div class="dropzone-content">
+                                <span class="dropzone-icon" aria-hidden="true">
+                                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                        <path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>
+                                    </svg>
+                                </span>
+                                <strong>Drop your PDF or image here</strong>
+                                <span>or click to browse</span>
+                                <div class="selected-file" id="selectedFile"></div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-full" id="uploadButton" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
+                            Upload &amp; Index
+                        </button>
+                        <div class="progress" id="uploadProgress">
+                            <div class="progress-header"><span id="progressText">Processing...</span><span id="progressPercent">0%</span></div>
+                            <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+                        </div>
+                        <div class="notification" id="uploadNotification"></div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel assistant-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="panel-eyebrow">AI ASSISTANT</span>
+                            <h2>Ask a Question</h2>
+                        </div>
+                        <span class="ai-badge"><span class="status-indicator"></span>Gemini</span>
+                    </div>
+                    <p class="panel-caption">Query the indexed knowledge base.</p>
+                    <div class="chat-input-area">
+                        <div class="input-wrapper">
+                            <textarea id="questionInput" placeholder="Ask something about your documents..." rows="4"></textarea>
+                            <div class="input-controls">
+                                <span class="char-count"><span id="characterCount">0</span> chars</span>
+                                <button class="btn-send" id="askButton" aria-label="Ask question" title="Ask question">
+                                    <span>Ask Question</span>
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="suggestion-row">
+                        <span>Try:</span>
+                        <div class="suggestion-chips">
+                            <button class="suggestion-chip">What is RAG?</button>
+                            <button class="suggestion-chip">Explain the architecture</button>
+                            <button class="suggestion-chip">What are the advantages?</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel answer-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="panel-eyebrow">GENERATED RESPONSE</span>
+                            <h2>Answer</h2>
+                        </div>
+                        <div class="answer-tools">
+                            <span class="answer-state" id="answerState">Ready</span>
+                            <button class="btn-ghost-icon" id="clearChatBtn" title="Clear conversation" aria-label="Clear conversation">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatArea">
+                        <div class="welcome-message">
+                            <div class="welcome-icon" aria-hidden="true">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></svg>
+                            </div>
+                            <h3>Your answer will appear here</h3>
+                            <p>Ask a question to see a grounded response.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel sources-panel">
+                    <div class="panel-heading">
+                        <div>
+                            <span class="panel-eyebrow">DOCUMENT EVIDENCE</span>
+                            <h2>Sources</h2>
+                        </div>
+                        <div class="source-tools">
+                            <span class="source-count" id="sourceCount">0 sources</span>
+                            <button class="btn-clear-evidence" id="clearEvidence" type="button" title="Clear displayed citations" aria-label="Clear displayed citations">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                    <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6"/>
+                                </svg>
+                                Clear evidence
+                            </button>
+                        </div>
+                    </div>
+                    <div class="source-list" id="sourcesList">
+                        <div class="source-empty">Sources will appear after a question.</div>
+                    </div>
+                </section>
+            </section>
+
+    <!-- Documents View -->
+    <section class="content-page hidden" id="documentsView">
+        <div class="page-header">
+            <div>
+                <h2>Documents</h2>
+                <p>Manage your indexed documents</p>
+            </div>
+            <button class="btn btn-secondary" id="refreshDocuments">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23,4 23,10 17,10"/>
+                    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                </svg>
+                Refresh
+            </button>
+        </div>
+        <div class="documents-table" id="documentsContainer">
+            <div class="loading-state">Loading documents...</div>
+        </div>
+
+        <!-- Chunk Viewer Modal -->
+        <div class="modal-overlay" id="chunkModal" style="display:none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <div>
+                        <h3 id="chunkModalTitle">Document Chunks</h3>
+                        <p class="modal-subtitle" id="chunkModalSubtitle"></p>
+                    </div>
+                    <button class="btn-close" id="closeChunkModal">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body" id="chunkModalBody">
+                    <div class="loading-state">Loading chunks...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- History View -->
+    <section class="content-page hidden" id="historyView">
+        <div class="page-header">
+            <div>
+                <h2>History</h2>
+                <p>Your conversation history</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="exportHistory">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Export MD
+                </button>
+                <button class="btn btn-secondary" id="clearHistory">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    Clear
+                </button>
+            </div>
+        </div>
+        <div id="historyContainer">
+            <div class="empty-state">No history yet. Ask a question to get started.</div>
+        </div>
+    </section>
+
+    <!-- Analytics View -->
+    <section class="content-page hidden" id="analyticsView">
+        <div class="page-header">
+            <div>
+                <h2>Analytics</h2>
+                <p>Query activity, response time, and indexed content</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-reset" id="resetAnalytics" title="Reset query, feedback, and latency metrics">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6"/>
+                    </svg>
+                    Reset metrics
+                </button>
+                <button class="btn btn-secondary" id="refreshAnalytics">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23,4 23,10 17,10"/>
+                        <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div id="analyticsContainer">
+            <div class="loading-state">Loading analytics...</div>
+        </div>
+    </section>
+        </main>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <div class="toast-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20,6 9,17 4,12"/>
+        </svg>
+    </div>
+    <div class="toast-text">
+        <strong id="toastTitle">Success</strong>
+        <p id="toastMessage">Operation completed.</p>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js?v=15"></script>
+
+</body>
+</html>

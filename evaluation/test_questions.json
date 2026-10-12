@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "question": "What is the Royal Mart store's primary focus?",
+    "expected_answer": "It operates primarily as a retail point (supermarket) selling fresh vegetables, groceries, cereals, staples, and daily-use items.",
+    "ground_truth_filename": "royal_mart_report.pdf",
+    "is_out_of_domain": false
+  },
+  {
+    "id": 2,
+    "question": "Does Royal Mart in Bengaluru conduct direct export activities?",
+    "expected_answer": "No, the Royal Mart outlet in Bengaluru is primarily a domestic retail point; no direct export shipments or activities were observed.",
+    "ground_truth_filename": "royal_mart_report.pdf",
+    "is_out_of_domain": false
+  },
+  {
+    "id": 3,
+    "question": "What is the capital of France?",
+    "expected_answer": "The capital of France is Paris.",
+    "ground_truth_filename": null,
+    "is_out_of_domain": true
+  }
+]

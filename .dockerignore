@@ -1,0 +1,23 @@
+# Root build-context excludes (mirrors .gitignore for any root-context build).
+.git/
+.gitignore
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+node_modules/
+
+# Secrets and local data never belong in an image.
+.env
+*.env
+!.env.example
+chroma_db/
+uploads/
+data/
+
+# Docs / meta not needed at build time.
+*.md
+LICENSE
+.github/

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Architecture — RAG QA System</title>
+<style>
+    *{box-sizing:border-box;}
+    body{
+        margin:0; background:#ffffff; color:#0f172a;
+        font-family:'Segoe UI',Inter,system-ui,sans-serif;
+        padding:48px 32px; text-align:center;
+    }
+    h1{font-size:28px; margin:0 0 4px; color:#0f172a;}
+    .subtitle{color:#64748b; font-size:15px; margin:0 0 8px; font-weight:600;}
+    .tagline{color:#94a3b8; font-size:13px; margin:0 0 28px;}
+    .diagram{
+        max-width:1080px; margin:0 auto; padding:32px 24px;
+        border:1px solid #e2e8f0; border-radius:20px;
+        box-shadow:0 10px 40px rgba(15,23,42,.06);
+    }
+    .mermaid{display:flex; justify-content:center;}
+    .legend{
+        display:flex; gap:20px; justify-content:center; flex-wrap:wrap;
+        margin-top:26px; font-size:13px; color:#475569;
+    }
+    .legend span{display:inline-flex; align-items:center; gap:7px;}
+    .dot{width:13px; height:13px; border-radius:4px; display:inline-block;}
+    .caption{color:#64748b; font-size:13px; margin-top:22px; max-width:720px;
+        margin-left:auto; margin-right:auto; line-height:1.6;}
+    b{color:#1e293b;}
+</style>
+</head>
+<body>
+
+    <h1>LLM-Powered Domain-Specific QA System</h1>
+    <p class="subtitle">Retrieval-Augmented Generation (RAG) Architecture</p>
+    <p class="tagline">FastAPI · ChromaDB · Google Gemini</p>
+
+    <div class="diagram">
+        <pre class="mermaid">
+flowchart LR
+    User(("👤&nbsp;User"))
+    PDF["📄&nbsp;PDF<br/>Documents"]
+    FE["🖥️&nbsp;Frontend<br/><small>Web UI</small>"]
+    BE["⚙️&nbsp;Backend<br/><small>FastAPI</small>"]
+    VDB[("🗄️&nbsp;ChromaDB<br/><small>Vector Store</small>")]
+    LLM["🤖&nbsp;Google&nbsp;Gemini<br/><small>LLM</small>"]
+
+    PDF -. "Setup:&nbsp;extract · chunk · embed" .-> VDB
+
+    User -- "1 · ask question" --> FE
+    FE   -- "2 · POST /api/ask" --> BE
+    BE   -- "3 · semantic search" --> VDB
+    VDB  -- "4 · top-K relevant chunks" --> BE
+    BE   -- "5 · grounded prompt" --> LLM
+    LLM  -- "6 · generated answer" --> BE
+    BE   -- "7 · answer + citations" --> FE
+    FE   -- "8 · display" --> User
+
+    classDef user fill:#e2e8f0,stroke:#475569,color:#0f172a,stroke-width:2px;
+    classDef app  fill:#dbeafe,stroke:#2563eb,color:#0f172a,stroke-width:2px;
+    classDef data fill:#d1fae5,stroke:#059669,color:#0f172a,stroke-width:2px;
+    classDef ext  fill:#ede9fe,stroke:#7c3aed,color:#0f172a,stroke-width:2px;
+    classDef doc  fill:#fef3c7,stroke:#d97706,color:#0f172a,stroke-width:2px;
+
+    class User user;
+    class FE,BE app;
+    class VDB data;
+    class LLM ext;
+    class PDF doc;
+        </pre>
+    </div>
+
+    <div class="legend">
+        <span><i class="dot" style="background:#dbeafe;border:1px solid #2563eb;"></i> Application (Frontend + API)</span>
+        <span><i class="dot" style="background:#d1fae5;border:1px solid #059669;"></i> Vector Store</span>
+        <span><i class="dot" style="background:#ede9fe;border:1px solid #7c3aed;"></i> LLM (external)</span>
+        <span><i class="dot" style="background:#fef3c7;border:1px solid #d97706;"></i> Documents</span>
+    </div>
+
+    <p class="caption">
+        Documents are chunked and embedded into <b>ChromaDB</b> (one-time setup). For each question,
+        the backend retrieves the most relevant chunks, builds a <b>grounded prompt</b>, and asks
+        <b>Gemini</b> to answer <b>only</b> from that context — returning the answer with source citations.
+    </p>
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+        startOnLoad:true,
+        theme:'base',
+        themeVariables:{
+            fontFamily:'Segoe UI, Inter, sans-serif',
+            fontSize:'15px',
+            lineColor:'#64748b',
+            edgeLabelBackground:'#ffffff'
+        },
+        flowchart:{ curve:'basis', nodeSpacing:55, rankSpacing:75 }
+    });
+</script>
+</body>
+</html>

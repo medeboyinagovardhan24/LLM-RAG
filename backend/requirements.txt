@@ -1,0 +1,15 @@
+# Runtime dependencies (pinned to versions verified in the project venv).
+fastapi==0.141.1
+uvicorn[standard]==0.52.3
+python-multipart==0.0.32
+python-dotenv==1.2.2
+pydantic-settings==2.15.0
+pypdf==6.16.1
+chromadb==1.5.9
+google-genai==2.18.1
+scikit-learn==1.6.1
+rank-bm25==0.2.2
+Pillow==11.1.0
+pytesseract==0.3.13
+pdfplumber>=0.11.0
+pypdfium2>=5.0.0
