@@ -1,56 +1,20 @@
-# =========================================================
-# Python
-# =========================================================
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-.eggs/
-build/
-dist/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
 
-# =========================================================
-# Virtual environments
-# =========================================================
-.venv/
-venv/
-env/
-ENV/
-
-# =========================================================
-# Environment / secrets  (keep .env.example tracked)
-# =========================================================
+# Secrets and environment variables
 .env
-*.env
+.env.*
 !.env.example
 
-# =========================================================
-# Node (frontend tooling, if ever added)
-# =========================================================
-node_modules/
-npm-debug.log*
-yarn-error.log*
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
 
-# =========================================================
-# Persistent application data — vector store + uploaded PDFs
-# =========================================================
-/chroma_db/
-/uploads/
-/backend/memory_store.json
-data/
+# Local database and uploaded documents
+chroma_db/
+uploads/
 
-# =========================================================
-# OS / editor cruft
-# =========================================================
+# Generated files
+*.log
 .DS_Store
-Thumbs.db
-desktop.ini
-.idea/
 .vscode/
-*.swp
-*~
