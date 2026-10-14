@@ -4,161 +4,235 @@ A Retrieval-Augmented Generation (RAG) application that answers questions from y
 
 ## Features
 
-- **Document processing** — extracts text and tables from PDFs; runs OCR / vision analysis on scanned pages and uploaded images.
-- **Hybrid retrieval** — combines ChromaDB vector similarity with BM25 keyword scoring, plus content-type–aware boosting for tables and images.
+- **Document processing** — extracts text and tables from PDFs; runs OCR and vision analysis on scanned pages and uploaded images.
+- **Hybrid retrieval** — combines ChromaDB vector similarity with BM25 keyword scoring, plus content-type-aware boosting for tables and images.
 - **Grounded answers with citations** — responses cite the source file, page, and chunk.
 - **Hallucination guard** — confidence scoring and low-grounding warnings.
 - **Query rewriting** — optional LLM-based query expansion for better recall.
-- **Streaming** — token-by-token answers over Server-Sent Events.
-- **Evaluation framework** — offline harness for retrieval recall and answer faithfulness/relevance.
-- **Caching & monitoring** — in-memory response cache with TTL and per-endpoint request metrics.
+- **Streaming** — token-by-token answers over Server-Sent Events (SSE).
+- **Evaluation framework** — offline harness for retrieval recall and answer faithfulness and relevance.
+- **Caching and monitoring** — in-memory response cache with TTL and per-endpoint request metrics.
 
-## Technology stack
+## Technology Stack
 
-- Python · FastAPI · Uvicorn
-- ChromaDB (vector store)
+- Python, FastAPI, Uvicorn
+- ChromaDB — vector store
 - Google Gemini API (`google-genai`) — generation, embeddings, and vision
-- pypdf · pdfplumber · pypdfium2 · Pillow · pytesseract (document parsing / OCR)
-- rank-bm25 (keyword retrieval)
-- Static HTML/CSS/JS frontend (served by nginx in Docker)
+- pypdf, pdfplumber, pypdfium2, Pillow, pytesseract — document parsing and OCR
+- rank-bm25 — keyword retrieval
+- Static HTML, CSS, and JavaScript frontend
+- Nginx — frontend serving and API reverse proxy in Docker
 
-## Project structure
+## Project Structure
 
 ```text
 LLM-RAG/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py          # FastAPI HTTP layer (routes, middleware, streaming)
-│   │   ├── services.py      # RAG core: ingestion, ChromaDB, Gemini generator
-│   │   ├── hybrid_search.py # vector + BM25 retrieval
-│   │   ├── guard.py         # hallucination detection / confidence scoring
-│   │   ├── reranker.py      # LLM query rewriting & expansion
-│   │   ├── evaluator.py     # faithfulness / relevance / coverage metrics
-│   │   ├── cache_monitor.py # response cache + request monitoring
-│   │   ├── memory.py        # conversation history & analytics
-│   │   ├── schemas.py       # Pydantic request/response models
-│   │   └── config.py        # environment-driven settings
-│   ├── tests/               # offline pytest suite (no network / no real key)
+│   │   ├── main.py
+│   │   ├── services.py
+│   │   ├── hybrid_search.py
+│   │   ├── guard.py
+│   │   ├── reranker.py
+│   │   ├── evaluator.py
+│   │   ├── cache_monitor.py
+│   │   ├── memory.py
+│   │   ├── schemas.py
+│   │   └── config.py
+│   ├── tests/
 │   ├── requirements.txt
 │   ├── requirements-dev.txt
 │   └── Dockerfile
-├── frontend/                # static UI; nginx reverse-proxies /api in Docker
-├── evaluation/              # offline RAG evaluation harness
-├── docs/                    # architecture diagrams
-├── run.py                   # one-command local launcher (API + UI)
+├── frontend/
+├── evaluation/
+├── docs/
+├── run.py
 ├── docker-compose.yml
 ├── Makefile
 ├── .env.example
+├── .gitignore
+├── .dockerignore
+├── LICENSE
 └── README.md
 ```
 
 ## Setup
 
-### 1. Clone
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/medeboyinagovardhan24/LLM-RAG.git
 cd LLM-RAG
 ```
 
-### 2. Create a virtual environment
+### 2. Create a Virtual Environment
+
+Create the Python virtual environment:
 
 ```bash
 python -m venv .venv
-# Windows (PowerShell):
+```
+
+**Windows PowerShell:**
+
+```powershell
 .\.venv\Scripts\Activate.ps1
-# macOS / Linux:
+```
+
+**macOS or Linux:**
+
+```bash
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Install Dependencies
+
+Install the application dependencies:
 
 ```bash
 pip install -r backend/requirements.txt
-# For running the test suite as well:
+```
+
+To install the development dependencies required for testing:
+
+```bash
 pip install -r backend/requirements-dev.txt
 ```
 
-### 4. Configure your API key
+### 4. Configure the Gemini API Key
+
+Create a `.env` file from the example:
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**macOS or Linux:**
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set your Google Gemini API key (get one at https://aistudio.google.com/apikey):
+Open `.env` and configure your Google Gemini API key:
 
-```
+```env
 GEMINI_API_KEY=your-gemini-api-key-here
 ```
 
-The model and RAG parameters are configurable there too (`GEMINI_MODEL`, `CHUNK_SIZE`, `TOP_K`, `MAX_UPLOAD_MB`, `ALLOWED_ORIGINS`, …). **Never commit your `.env`.**
+Get an API key from:
 
-## Running
+https://aistudio.google.com/apikey
 
-### Option A — one command (backend + frontend)
+The model and RAG parameters can also be configured using environment variables, including `GEMINI_MODEL`, `CHUNK_SIZE`, `TOP_K`, `MAX_UPLOAD_MB`, and `ALLOWED_ORIGINS`, depending on the settings supported by the application.
+
+**Important:** Never commit your actual `.env` file or expose your API key publicly.
+
+## Running the Application
+
+### Option A — Run the Backend and Frontend Together
+
+From the project root, run:
 
 ```bash
 python run.py
 ```
 
-This starts the API and serves the static UI, printing both URLs (it auto-selects free ports).
+The launcher starts the backend API and frontend, then prints the URLs to open in your browser. It can select available ports automatically.
 
-### Option B — backend only
+### Option B — Run the Backend Only
+
+From the project root:
 
 ```bash
 cd backend
 uvicorn app.main:app --reload --port 8000
 ```
 
-Then open the interactive API docs at http://127.0.0.1:8000/docs.
+Open the interactive API documentation:
 
-### Option C — Docker (full stack)
+http://127.0.0.1:8000/docs
+
+### Option C — Run with Docker
+
+Ensure Docker Desktop is running and your `.env` file contains the required configuration.
+
+From the project root:
 
 ```bash
 docker compose up --build
 ```
 
-The UI is served at http://localhost:8080 and proxies `/api` to the backend. `GEMINI_API_KEY` is read from your `.env`.
+The frontend is configured to be served at:
 
-> On systems with `make`, the `Makefile` wraps these: `make install`, `make dev`, `make test`, `make docker-up`.
+http://localhost:8080
+
+The backend API is accessible through the frontend's configured `/api` reverse proxy.
+
+The exact ports and service configuration depend on `docker-compose.yml`.
+
+### Makefile Commands
+
+On systems with `make` installed, the following convenience commands may be available:
+
+```bash
+make install
+make dev
+make test
+make docker-up
+```
+
+Refer to the project's `Makefile` for the exact behavior of each command.
 
 ## Testing
 
-The suite runs fully offline — it uses a throwaway ChromaDB in a temp directory and a fake generator, so no network access or real API key is required:
+The project includes an offline test suite. It uses a temporary ChromaDB instance and a mock generator so tests can run without contacting the Gemini API or requiring a real API key.
+
+To run the tests manually:
 
 ```bash
 cd backend
 pytest
 ```
 
-CI runs this automatically on every push and pull request (see `.github/workflows/ci.yml`).
+Run the test suite whenever you want to verify the application after making code changes.
 
 ## Evaluation
 
-The evaluation harness measures answer relevance, retrieval Recall@K, RAG vs. non-RAG performance, and out-of-domain handling:
+The evaluation framework measures answer relevance, retrieval Recall@K, comparisons between RAG and non-RAG responses, and out-of-domain handling.
+
+From the project root, run:
 
 ```bash
 python evaluation/run_evaluation.py
 ```
 
-It reads `evaluation/test_questions.json` and writes `evaluation/evaluation_report.json` and `results.csv` (both git-ignored, since they are generated). Results depend on the indexed documents, retrieval configuration, and Gemini API availability.
+The evaluation uses the configured test questions and produces evaluation reports and CSV results when supported by the current implementation.
+
+Generated evaluation outputs are excluded from version control when configured in `.gitignore`.
+
+Results depend on the indexed documents, retrieval settings, available evaluation data, and Gemini API availability.
 
 ## Limitations
 
-- Answer quality depends on document quality and the retrieved context.
+- Answer quality depends on the quality of the source documents and retrieved context.
 - Multilingual generation does not guarantee equally effective multilingual retrieval.
-- Scanned documents, tables, and embedded images depend on extraction/vision quality.
-- Gemini API availability, rate limits, and credentials affect generation and evaluation.
+- Scanned documents, tables, and embedded images depend on extraction and vision quality.
+- Gemini API availability, rate limits, and credentials can affect generation and evaluation.
+- Retrieval and answer quality may vary with document structure and query complexity.
 
-## Future enhancements
+## Future Enhancements
 
-- Improved reranking and cross-encoder scoring
-- More reliable table and embedded-image extraction
-- Expanded evaluation datasets and metrics
+- Improved reranking and cross-encoder scoring.
+- More reliable table and embedded-image extraction.
+- Expanded evaluation datasets and metrics.
+- Improved multilingual document retrieval.
+- Enhanced monitoring and retrieval diagnostics.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Repository
 
