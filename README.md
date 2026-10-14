@@ -1,111 +1,164 @@
 # LLM-RAG: Domain-Specific Question Answering System
 
-A Retrieval-Augmented Generation (RAG) application that answers questions using uploaded documents, retrieves relevant context, and generates grounded answers with source references.
+A Retrieval-Augmented Generation (RAG) application that answers questions from your own documents. It retrieves the most relevant passages (text, tables, and image descriptions) from uploaded PDFs and images, then uses Google's Gemini models to generate grounded answers with source citations.
 
 ## Features
 
-- **Document Processing:** Extracts text from PDF documents.
-- **Semantic Retrieval:** Uses ChromaDB for vector-based document search.
-- **AI-Powered Answers:** Uses Google's Gemini API to generate answers from retrieved context.
-- **Source Citations:** Provides document references to help users verify answers.
-- **Conversation Memory:** Supports retaining conversation history.
-- **Evaluation Framework:** Evaluates question-answering performance and retrieval metrics.
-- **Multilingual Support:** Gemini supports multiple languages, while retrieval quality depends on the embedding model and document language.
-- **Table and Image Retrieval:** Intended to support richer document content, depending on the implemented extraction and retrieval features.
+- **Document processing** — extracts text and tables from PDFs; runs OCR / vision analysis on scanned pages and uploaded images.
+- **Hybrid retrieval** — combines ChromaDB vector similarity with BM25 keyword scoring, plus content-type–aware boosting for tables and images.
+- **Grounded answers with citations** — responses cite the source file, page, and chunk.
+- **Hallucination guard** — confidence scoring and low-grounding warnings.
+- **Query rewriting** — optional LLM-based query expansion for better recall.
+- **Streaming** — token-by-token answers over Server-Sent Events.
+- **Evaluation framework** — offline harness for retrieval recall and answer faithfulness/relevance.
+- **Caching & monitoring** — in-memory response cache with TTL and per-endpoint request metrics.
 
-## Technology Stack
+## Technology stack
 
-- Python
-- FastAPI
-- ChromaDB
-- Google Gemini API
-- PyPDF
-- pdfplumber
-- HTML, CSS, and JavaScript
+- Python · FastAPI · Uvicorn
+- ChromaDB (vector store)
+- Google Gemini API (`google-genai`) — generation, embeddings, and vision
+- pypdf · pdfplumber · pypdfium2 · Pillow · pytesseract (document parsing / OCR)
+- rank-bm25 (keyword retrieval)
+- Static HTML/CSS/JS frontend (served by nginx in Docker)
 
-## Project Structure
+## Project structure
 
 ```text
-llm/
+LLM-RAG/
 ├── backend/
-├── frontend/
-├── evaluation/
-├── uploads/
-├── chroma_db/
+│   ├── app/
+│   │   ├── main.py          # FastAPI HTTP layer (routes, middleware, streaming)
+│   │   ├── services.py      # RAG core: ingestion, ChromaDB, Gemini generator
+│   │   ├── hybrid_search.py # vector + BM25 retrieval
+│   │   ├── guard.py         # hallucination detection / confidence scoring
+│   │   ├── reranker.py      # LLM query rewriting & expansion
+│   │   ├── evaluator.py     # faithfulness / relevance / coverage metrics
+│   │   ├── cache_monitor.py # response cache + request monitoring
+│   │   ├── memory.py        # conversation history & analytics
+│   │   ├── schemas.py       # Pydantic request/response models
+│   │   └── config.py        # environment-driven settings
+│   ├── tests/               # offline pytest suite (no network / no real key)
+│   ├── requirements.txt
+│   ├── requirements-dev.txt
+│   └── Dockerfile
+├── frontend/                # static UI; nginx reverse-proxies /api in Docker
+├── evaluation/              # offline RAG evaluation harness
+├── docs/                    # architecture diagrams
+├── run.py                   # one-command local launcher (API + UI)
+├── docker-compose.yml
+├── Makefile
 ├── .env.example
-├── .gitignore
-├── README.md
-└── run.py
+└── README.md
 ```
 
 ## Setup
 
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/medeboyinagovardhan24/LLM-RAG.git
 cd LLM-RAG
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create a virtual environment
 
-Windows PowerShell:
-
-```powershell
+```bash
 python -m venv .venv
+# Windows (PowerShell):
 .\.venv\Scripts\Activate.ps1
+# macOS / Linux:
+source .venv/bin/activate
 ```
 
 ### 3. Install dependencies
 
-Install the packages required by your project. If you maintain a `requirements.txt` file, run:
-
-```powershell
-pip install -r requirements.txt
+```bash
+pip install -r backend/requirements.txt
+# For running the test suite as well:
+pip install -r backend/requirements-dev.txt
 ```
 
 ### 4. Configure your API key
 
-Create a local `.env` file and configure your Gemini API key using the environment variable expected by your application.
-
-**Never commit your `.env` file or expose your API key.**
-
-### 5. Start the backend
-
-Use the startup command configured for your project. For example:
-
-```powershell
-uvicorn backend.main:app --reload
+```bash
+cp .env.example .env
 ```
 
-Open `http://127.0.0.1:8000/docs` to access the FastAPI documentation.
+Edit `.env` and set your Google Gemini API key (get one at https://aistudio.google.com/apikey):
+
+```
+GEMINI_API_KEY=your-gemini-api-key-here
+```
+
+The model and RAG parameters are configurable there too (`GEMINI_MODEL`, `CHUNK_SIZE`, `TOP_K`, `MAX_UPLOAD_MB`, `ALLOWED_ORIGINS`, …). **Never commit your `.env`.**
+
+## Running
+
+### Option A — one command (backend + frontend)
+
+```bash
+python run.py
+```
+
+This starts the API and serves the static UI, printing both URLs (it auto-selects free ports).
+
+### Option B — backend only
+
+```bash
+cd backend
+uvicorn app.main:app --reload --port 8000
+```
+
+Then open the interactive API docs at http://127.0.0.1:8000/docs.
+
+### Option C — Docker (full stack)
+
+```bash
+docker compose up --build
+```
+
+The UI is served at http://localhost:8080 and proxies `/api` to the backend. `GEMINI_API_KEY` is read from your `.env`.
+
+> On systems with `make`, the `Makefile` wraps these: `make install`, `make dev`, `make test`, `make docker-up`.
+
+## Testing
+
+The suite runs fully offline — it uses a throwaway ChromaDB in a temp directory and a fake generator, so no network access or real API key is required:
+
+```bash
+cd backend
+pytest
+```
+
+CI runs this automatically on every push and pull request (see `.github/workflows/ci.yml`).
 
 ## Evaluation
 
-The evaluation framework can measure:
+The evaluation harness measures answer relevance, retrieval Recall@K, RAG vs. non-RAG performance, and out-of-domain handling:
 
-- Answer relevance and correctness
-- Retrieval Recall@K
-- RAG versus non-RAG performance
-- Out-of-domain question handling
-- Unsupported-answer behavior
+```bash
+python evaluation/run_evaluation.py
+```
 
-Evaluation results depend on the test dataset, retrieval configuration, API availability, and evaluation implementation.
+It reads `evaluation/test_questions.json` and writes `evaluation/evaluation_report.json` and `results.csv` (both git-ignored, since they are generated). Results depend on the indexed documents, retrieval configuration, and Gemini API availability.
 
 ## Limitations
 
-- Answer quality depends on document quality and retrieved context.
+- Answer quality depends on document quality and the retrieved context.
 - Multilingual generation does not guarantee equally effective multilingual retrieval.
-- Scanned documents, tables, and embedded images require suitable extraction and indexing support.
-- Gemini API availability, rate limits, and credentials can affect evaluation results.
+- Scanned documents, tables, and embedded images depend on extraction/vision quality.
+- Gemini API availability, rate limits, and credentials affect generation and evaluation.
 
-## Future Enhancements
+## Future enhancements
 
-- Improved hybrid retrieval and reranking
+- Improved reranking and cross-encoder scoring
 - More reliable table and embedded-image extraction
-- Richer source citations
-- Streaming responses
 - Expanded evaluation datasets and metrics
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ## Repository
 
