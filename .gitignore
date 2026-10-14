@@ -14,6 +14,14 @@ __pycache__/
 chroma_db/
 uploads/
 
+# Persisted runtime state (conversation history, analytics) — never commit
+memory_store.json
+backend/memory_store.json
+
+# Generated evaluation artifacts — regenerate with evaluation/run_evaluation.py
+evaluation/evaluation_report.json
+evaluation/results.csv
+
 # Generated files
 *.log
 .DS_Store
