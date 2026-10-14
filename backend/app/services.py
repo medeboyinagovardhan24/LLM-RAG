@@ -74,8 +74,15 @@ class GeminiEmbeddingFunction(chromadb.EmbeddingFunction):
                 for item in res.embeddings:
                     embeddings.append(item.values)
             except Exception as e:
-                logger.warning("Error generating Gemini embedding batch: %s. Using zeros fallback.", e)
-                embeddings.extend([[0.0] * 3072 for _ in batch])
+                # Never silently insert zero/placeholder vectors: ChromaDB would
+                # store them and quietly corrupt similarity search for every
+                # future query. Fail loudly so the upload is rejected and can be
+                # retried instead of indexing unusable embeddings.
+                logger.error("Gemini embedding batch failed: %s", e)
+                raise RuntimeError(
+                    "Failed to generate embeddings via the Gemini API; "
+                    "the document was not indexed. Please retry."
+                ) from e
         return embeddings
 
 
@@ -456,6 +463,7 @@ def read_pdf_into_chunks(
     chunks: list[str] = []
     metadatas: list[dict] = []
     ids: list[str] = []
+    ocr_page_nums: set[int] = set()   # pages whose text came from Gemini Vision OCR
     total_chars = 0
     total_pages = 0
 
@@ -507,6 +515,7 @@ def read_pdf_into_chunks(
                     v_text = (vision_res.text or "").strip()
                     if v_text:
                         extracted_text_pages[idx] = (page_num, v_text)
+                        ocr_page_nums.add(page_num)
                 except Exception as ve:
                     logger.warning("Gemini Vision OCR failed for page %d in %s: %s", page_num, filename, ve)
     except Exception as pe:
@@ -561,8 +570,9 @@ def read_pdf_into_chunks(
             continue
         total_chars += len(text)
         page_chunks = split_text(text, settings.rag.chunk_size, settings.rag.chunk_overlap)
-        # Determine if this page was OCR'd (was < 40 chars originally)
-        content_type = CT_TEXT
+        # Pages whose text came from Gemini Vision OCR (originally < 40 chars)
+        # are labelled CT_OCR so retrieval and analytics can distinguish them.
+        content_type = CT_OCR if page_num in ocr_page_nums else CT_TEXT
         for chunk_num, chunk in enumerate(page_chunks, start=1):
             chunks.append(chunk)
             metadatas.append({

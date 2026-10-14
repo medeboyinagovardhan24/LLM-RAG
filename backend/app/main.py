@@ -313,7 +313,16 @@ async def upload_pdf(
             file_path.unlink()
         raise HTTPException(status_code=422, detail="No readable text or content found in the document")
 
-    collection.add(documents=chunks, ids=ids, metadatas=metadatas)
+    try:
+        collection.add(documents=chunks, ids=ids, metadatas=metadatas)
+    except Exception:
+        logger.exception("Failed to index %s", safe_filename)
+        if file_path.exists():
+            file_path.unlink()
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to generate embeddings for the document. Please try again.",
+        )
 
     # Count chunk types for response
     ct_counter = Counter(m.get("content_type", CT_TEXT) for m in metadatas)
