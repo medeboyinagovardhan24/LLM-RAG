@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM-RAG: Domain-Specific Question Answering System</title>
+<style>
+    :root{
+        --bg:#0b1020; --panel:#141a2e; --border:#243049;
+        --text:#e6ebf5; --muted:#9aa7c2; --accent:#6d8bff; --accent2:#22c55e;
+    }
+    *{box-sizing:border-box;}
+    body{
+        margin:0; background:var(--bg); color:var(--text);
+        font-family:'Segoe UI',Inter,system-ui,sans-serif; line-height:1.5;
+        padding:40px 24px;
+    }
+    .wrap{max-width:1100px; margin:0 auto;}
+    header{text-align:center; margin-bottom:8px;}
+    header h1{font-size:26px; margin:0 0 6px;}
+    header p{color:var(--muted); margin:0;}
+    .badges{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:16px 0 8px;}
+    .badge{background:var(--panel); border:1px solid var(--border); color:var(--muted);
+        padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600;}
+    section{
+        background:var(--panel); border:1px solid var(--border); border-radius:16px;
+        padding:24px; margin:24px 0;
+    }
+    section h2{
+        font-size:16px; margin:0 0 4px; color:var(--accent);
+        text-transform:uppercase; letter-spacing:.08em;
+    }
+    section .sub{color:var(--muted); font-size:13px; margin:0 0 18px;}
+    .mermaid{display:flex; justify-content:center; background:transparent;}
+    footer{text-align:center; color:var(--muted); font-size:12px; margin-top:12px;}
+    code{background:#0e1424; border:1px solid var(--border); padding:1px 6px; border-radius:6px; color:#cbd5ff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <header>
+        <h1>LLM-RAG: Domain-Specific Question Answering System</h1>
+        <p>Retrieval-Augmented Generation (RAG) — System Architecture</p>
+        <div class="badges">
+            <span class="badge">FastAPI</span>
+            <span class="badge">ChromaDB</span>
+            <span class="badge">Google Gemini</span>
+            <span class="badge">pypdf</span>
+            <span class="badge">Vanilla JS + nginx</span>
+            <span class="badge">Docker</span>
+        </div>
+    </header>
+
+    <!-- 1. HIGH-LEVEL ARCHITECTURE -->
+    <section>
+        <h2>1 · High-Level Architecture</h2>
+        <p class="sub">Layered design: presentation → application (FastAPI) → data (vector store + files), with Gemini as an external LLM service.</p>
+        <pre class="mermaid">
+flowchart TB
+    subgraph CLIENT["🖥️  Presentation Layer"]
+        UI["Web UI &nbsp;·&nbsp; HTML / CSS / JS<br/><small>Dashboard &nbsp;·&nbsp; Ask &nbsp;·&nbsp; Documents</small>"]
+    end
+
+    subgraph SERVER["⚙️  Application Layer — FastAPI"]
+        API["REST Routes &nbsp;(main.py)<br/><small>/api/upload · /api/ask · /api/documents · /api/status</small>"]
+        SVC["RAG Services &nbsp;(services.py)<br/><small>extract · chunk · retrieve · prompt · generate</small>"]
+        CFG["Config &nbsp;(config.py)<br/><small>pydantic-settings</small>"]
+        SCH["Schemas &nbsp;(schemas.py)<br/><small>request / response models</small>"]
+    end
+
+    subgraph DATA["🗄️  Data Layer"]
+        VDB[("ChromaDB<br/>Vector Store<br/><small>embeddings + metadata</small>")]
+        FS[("File Storage<br/><small>uploads/ (PDFs)</small>")]
+    end
+
+    subgraph EXT["☁️  External Service"]
+        LLM["Google Gemini<br/><small>google-genai SDK</small>"]
+    end
+
+    UI -->|"HTTPS · REST /api/*"| API
+    API --> SVC
+    API -.validate.-> SCH
+    SVC --> CFG
+    SVC -->|"embed · store · semantic query"| VDB
+    SVC -->|"save PDF"| FS
+    SVC -->|"grounded prompt"| LLM
+    LLM -->|"generated answer"| SVC
+    API -->|"answer + citations"| UI
+
+    style CLIENT fill:#132038,stroke:#2b3f66
+    style SERVER fill:#12213a,stroke:#2b3f66
+    style DATA fill:#0f2233,stroke:#1f4b5f
+    style EXT fill:#241a33,stroke:#4b2f66
+        </pre>
+    </section>
+
+    <!-- 2. INGESTION -->
+    <section>
+        <h2>2 · Document Ingestion Pipeline</h2>
+        <p class="sub">What happens when a user uploads a PDF — validation, de-duplication, chunking and indexing.</p>
+        <pre class="mermaid">
+flowchart LR
+    U["📄 PDF Upload"] --> V["Validate<br/><small>type · size (≤20MB) · %PDF magic bytes</small>"]
+    V --> H["SHA-256 Hash<br/><small>duplicate check</small>"]
+    H --> E["Extract Text<br/><small>pypdf · per page</small>"]
+    E --> C["Chunk<br/><small>800 chars · 100 overlap</small>"]
+    C --> S["Embed + Store<br/><small>ChromaDB</small>"]
+    S --> M["Metadata tagged<br/><small>filename · page · chunk</small>"]
+
+    style U fill:#132038,stroke:#2b3f66
+    style S fill:#0f2233,stroke:#1f4b5f
+    style M fill:#0f2233,stroke:#1f4b5f
+        </pre>
+    </section>
+
+    <!-- 3. QUERY / RAG -->
+    <section>
+        <h2>3 · Query Flow (Retrieval-Augmented Generation)</h2>
+        <p class="sub">What happens when a user asks a question — retrieve relevant chunks, ground the prompt, generate a cited answer.</p>
+        <pre class="mermaid">
+flowchart LR
+    Q["❓ Question"] --> RT["Retrieve<br/><small>top-K = 10 · semantic search</small>"]
+    RT --> DD["De-duplicate<br/><small>unique chunks</small>"]
+    DD --> PR["Build Grounded Prompt<br/><small>context + strict 'answer only from context' rules</small>"]
+    PR --> GEN["Gemini · Generate"]
+    GEN --> ANS["✅ Answer + Sources<br/><small>file · page · chunk</small>"]
+
+    RT -. queries .-> VDB[("ChromaDB")]
+
+    style Q fill:#132038,stroke:#2b3f66
+    style ANS fill:#122a1c,stroke:#2f6640
+    style VDB fill:#0f2233,stroke:#1f4b5f
+        </pre>
+    </section>
+
+    <footer>
+        Grounded answers only · anti-hallucination prompt · source citations &nbsp;|&nbsp;
+        Local dev on <code>:8000</code> (API) + <code>:5500</code> (UI), or one-command Docker on <code>:8080</code>
+    </footer>
+
+</div>
+
+<script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+        startOnLoad:true,
+        theme:'dark',
+        themeVariables:{
+            fontFamily:'Segoe UI, Inter, sans-serif',
+            primaryColor:'#1b2842',
+            primaryTextColor:'#e6ebf5',
+            primaryBorderColor:'#6d8bff',
+            lineColor:'#6d8bff',
+            fontSize:'14px'
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+# =========================================================
+# LLM-RAG: Domain-Specific Question Answering System — full stack
+# ---------------------------------------------------------
+#   docker compose up --build
+#   -> frontend on http://localhost:8080  (proxies /api -> backend)
+#
+# GEMINI_API_KEY is read from the .env file in this directory.
+# =========================================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: domainqa-backend:latest
+    environment:
+      # Required — compose fails fast if it is missing from .env.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?GEMINI_API_KEY is required. Set it in .env}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.6-flash}
+      DATA_DIR: /data
+      # Requests reach the API same-origin through the nginx proxy, so the
+      # browser Origin is the frontend's. Keep this in sync with the host port.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+    volumes:
+      - qa-data:/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+    image: domainqa-frontend:latest
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+# Named volume keeps the vector store (chroma_db) and uploaded PDFs across
+# restarts and rebuilds. It is independent of your local ./chroma_db.
+volumes:
+  qa-data:

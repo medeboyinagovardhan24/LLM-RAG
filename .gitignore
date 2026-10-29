@@ -1,0 +1,45 @@
+
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.py[cod]
+node_modules/
+
+# Local database and uploaded documents
+chroma_db/
+uploads/
+data/
+
+# Persisted runtime state (conversation history, analytics) — never commit
+memory_store.json
+backend/memory_store.json
+memory_store.json.*.tmp
+backend/memory_store.json.*.tmp
+
+# Generated evaluation artifacts — regenerate with evaluation/run_evaluation.py
+evaluation/evaluation_report.json
+evaluation/results.csv
+evaluation/runs/
+evaluation/runs/
+
+# Persisted runtime state (conversation history, analytics) — never commit
+memory_store.json
+backend/memory_store.json
+
+# Generated evaluation artifacts — regenerate with evaluation/run_evaluation.py
+evaluation/evaluation_report.json
+evaluation/results.csv
+
+# Generated files
+*.log
+.DS_Store
+.vscode/

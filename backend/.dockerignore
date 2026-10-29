@@ -1,0 +1,22 @@
+# Build context excludes — keep the backend image small and secret-free.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Never ship secrets or local virtualenvs.
+.env
+*.env
+.venv/
+venv/
+
+# Tests and dev-only deps are not needed in the runtime image.
+tests/
+requirements-dev.txt
+pytest.ini
+
+# Local persistent data must not be baked into the image.
+data/
+chroma_db/
+uploads/

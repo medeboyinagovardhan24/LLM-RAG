@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "question": "Where is the visited Royal Mart outlet located?",
+    "expected_answer": "No.90, Aura, Kothihosahalli, Extension, Maruthi Nagar, Kodigehalli, Bengaluru, Karnataka 560092.",
+    "ground_truth_filename": "93444.pdf",
+    "ground_truth_page": 1,
+    "category": "fact_retrieval",
+    "expected_keywords": ["90", "Aura", "Kothihosahalli", "Maruthi Nagar", "Kodigehalli", "Bengaluru"],
+    "is_out_of_domain": false,
+    "is_unanswerable": false
+  },
+  {
+    "id": 2,
+    "question": "Does the Royal Mart outlet in Bengaluru conduct direct export activities?",
+    "expected_answer": "No, the visited Royal Mart outlet is primarily a retail supermarket; available public information and visit observations do not establish direct export shipments or transactions.",
+    "ground_truth_filename": "93444.pdf",
+    "ground_truth_page": 1,
+    "category": "fact_retrieval",
+    "expected_keywords": ["retail", "export", "not establish", "direct export"],
+    "is_out_of_domain": false,
+    "is_unanswerable": false
+  },
+  {
+    "id": 3,
+    "question": "What products and customer services are offered by Royal Mart?",
+    "expected_answer": "Royal Mart offers fresh vegetables and groceries, cereals, staples, packaged food items, household and kitchen products, daily-use items, and doorstep delivery.",
+    "ground_truth_filename": "93444.pdf",
+    "ground_truth_page": 2,
+    "category": "fact_retrieval",
+    "expected_keywords": ["vegetables", "groceries", "cereals", "packaged food", "doorstep delivery"],
+    "is_out_of_domain": false,
+    "is_unanswerable": false
+  },
+  {
+    "id": 4,
+    "question": "According to the operational activities table, how does Royal Mart handle purchasing?",
+    "expected_answer": "Products are sourced from suppliers, distributors and other supply channels.",
+    "ground_truth_filename": "93444.pdf",
+    "ground_truth_page": 2,
+    "category": "table_retrieval",
+    "expected_keywords": ["purchasing", "suppliers", "distributors", "supply channels"],
+    "is_out_of_domain": false,
+    "is_unanswerable": false
+  },
+  {
+    "id": 5,
+    "question": "According to the logistics challenges table, what is the possible impact of cold chain failure for perishables?",
+    "expected_answer": "Quality loss if temperature is not maintained.",
+    "ground_truth_filename": "93444.pdf",
+    "ground_truth_page": 4,
+    "category": "table_retrieval",
+    "expected_keywords": ["cold chain", "perishables", "quality loss", "temperature"],
+    "is_out_of_domain": false,
+    "is_unanswerable": false
+  },
+  {
+    "id": 6,
+    "question": "What is Medeboyina Govardhan's academic specialization and contact email address?",
+    "expected_answer": "Artificial Intelligence and Machine Learning Engineering student, with contact email medeboyinagovardhan@gmail.com.",
+    "ground_truth_filename": "Govardhan_Resume.pdf",
+    "ground_truth_page": 1,
+    "category": "fact_retrieval",
+    "expected_keywords": ["Artificial Intelligence", "Machine Learning", "medeboyinagovardhan@gmail.com"],
+    "is_out_of_domain": false,
+    "is_unanswerable": false
+  },
+  {
+    "id": 7,
+    "question": "What is the total annual overseas export revenue and customs tax paid by Royal Mart in USD?",
+    "expected_answer": "The answer is not found in the provided documents.",
+    "ground_truth_filename": "93444.pdf",
+    "ground_truth_page": null,
+    "category": "insufficient_evidence",
+    "expected_keywords": ["not found in the provided documents", "not found", "no information"],
+    "is_out_of_domain": false,
+    "is_unanswerable": true
+  },
+  {
+    "id": 8,
+    "question": "What is the capital city of France and what currency does it use?",
+    "expected_answer": "The answer is not found in the provided documents.",
+    "ground_truth_filename": null,
+    "ground_truth_page": null,
+    "category": "out_of_domain",
+    "expected_keywords": ["Paris", "Euro"],
+    "is_out_of_domain": true,
+    "is_unanswerable": true
+  }
+]
